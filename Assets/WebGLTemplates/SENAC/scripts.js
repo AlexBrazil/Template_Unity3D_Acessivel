@@ -378,7 +378,7 @@ function UpdateAccessibilityLayer(jsonString) {
     const data = JSON.parse(jsonString);
     const elements = data.elements || [];
 
-    // Pega o elemento canvas e suas coordenadas na página
+    // Pega o elemento canvas e suas coordenadas na página (em pixels de CSS)
     const canvas = document.getElementById('unityCanvas');
     if (!canvas) {
         console.error("Elemento canvas da Unity não encontrado!");
@@ -386,19 +386,31 @@ function UpdateAccessibilityLayer(jsonString) {
     }
     const canvasRect = canvas.getBoundingClientRect();
 
+    // [NOVO] Pega o pixel ratio do dispositivo. Este é o fator de conversão
+    // entre os pixels físicos da Unity e os pixels de CSS do navegador.
+    const dpr = window.devicePixelRatio || 1;
+
     elements.forEach(elementData => {
       const proxyEl = document.createElement('button');
       proxyEl.className = 'proxy-element';
       proxyEl.setAttribute('aria-label', elementData.label);
       
-      // --- CÁLCULO DE POSIÇÃO DAQUELE MOMENTO ---
-      // Corrigia o deslocamento do canvas, mas não a escala.
-      proxyEl.style.left = `${canvasRect.left + elementData.x}px`;
-      proxyEl.style.top = `${canvasRect.top + elementData.y}px`;
+      // [NOVO] Converte as coordenadas e dimensões de pixels físicos (da Unity)
+      // para pixels de CSS, dividindo pelo devicePixelRatio.
+      const cssX = elementData.x / dpr;
+      const cssY = elementData.y / dpr;
+      const cssWidth = elementData.width / dpr;
+      const cssHeight = elementData.height / dpr;
 
-      // O tamanho era aplicado diretamente, sem correção de escala.
-      proxyEl.style.width = `${elementData.width}px`;
-      proxyEl.style.height = `${elementData.height}px`;
+      // [NOVO] Aplica as coordenadas convertidas.
+      // O offset do canvas (canvasRect.left/top) já está em pixels de CSS,
+      // então podemos somar diretamente os valores convertidos.
+      proxyEl.style.left = `${canvasRect.left + cssX}px`;
+      proxyEl.style.top = `${canvasRect.top + cssY}px`;
+
+      // Aplica as dimensões convertidas
+      proxyEl.style.width = `${cssWidth}px`;
+      proxyEl.style.height = `${cssHeight}px`;
 
       // Adiciona o listener de clique que envia a informação de volta para a Unity
       proxyEl.addEventListener('click', () => {

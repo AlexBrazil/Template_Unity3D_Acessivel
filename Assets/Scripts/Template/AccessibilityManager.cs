@@ -65,7 +65,6 @@ public class AccessibilityManager : MonoBehaviour
     // --- Lógica Principal de Sincronização ---
     private IEnumerator SyncAfterDelay()
     {
-        // Esta era a versão simples da corrotina naquele momento.
         yield return new WaitForEndOfFrame();
         SyncAccessibilityLayer();
     }
@@ -103,27 +102,49 @@ public class AccessibilityManager : MonoBehaviour
     
     private Rect GetScreenRect(RectTransform rectTransform)
     {
+        // Cria um array de 4 vetores para armazenar os cantos do elemento    
         Vector3[] corners = new Vector3[4];
+
+        // Preenche o array com as coordenadas mundiais dos 4 cantos do elemento
+        // Ordem: bottom-left, top-left, top-right, bottom-right
         rectTransform.GetWorldCorners(corners);
 
+        //Encontra o Canvas pai do elemento
         Canvas canvas = rectTransform.GetComponentInParent<Canvas>();
+
+
         if (canvas == null)
         {
             Debug.LogError("Accessible element não está dentro de um Canvas.", rectTransform);
             return Rect.zero;
         }
 
+        // Determina a câmera de renderização
+        // Se o Canvas for em modo overlay, usa null (renderização de tela)
+        // Senão, usa a câmera do mundo do Canvas
         Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
 
+        // Converte os cantos bottom-left e top-right para coordenadas de tela
+        // Usa a câmera definida anteriormente para conversão
         Vector2 screenBottomLeft = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
         Vector2 screenTopRight = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
 
-        // A inversão do Y usava Screen.height, que funciona bem no desktop.
+        // Calcula as dimensões do retângulo na tela
+        // x: coordenada x do canto inferior esquerdo
         float x = screenBottomLeft.x;
+
+        // inverte a coordenada y do canto superior direito
+        // Necessário porque o sistema de coordenadas da Unity é diferente do sistema de coordenadas da tela
+        // Screen.height subtrai para inverter o eixo Y (de cima para baixo)
         float y = Screen.height - screenTopRight.y; // Inverte o eixo Y
+
+        // width: diferença entre as coordenadas x dos cantos
         float width = screenTopRight.x - screenBottomLeft.x;
+
+        // height: diferença entre as coordenadas y dos cantos
         float height = screenTopRight.y - screenBottomLeft.y;
 
+        // Retorna um Rect com as coordenadas e dimensões calculadas
         return new Rect(x, y, width, height);
     }
 }
