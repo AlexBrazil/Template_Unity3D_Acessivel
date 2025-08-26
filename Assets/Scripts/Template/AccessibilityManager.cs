@@ -63,6 +63,16 @@ public class AccessibilityManager : MonoBehaviour
     }
 
     // --- Lógica Principal de Sincronização ---
+
+    // Método público para que outros scripts possam solicitar uma atualização.
+    // Este será nosso principal gatilho para UI dinâmica.
+    public void RequestAccessibilitySync()
+    {
+        // Apenas inicia a mesma corrotina que já usamos.
+        // Isso garante que a UI seja atualizada após o layout da Unity ser calculado.
+        StartCoroutine(SyncAfterDelay());
+    }
+
     private IEnumerator SyncAfterDelay()
     {
         yield return new WaitForEndOfFrame();
