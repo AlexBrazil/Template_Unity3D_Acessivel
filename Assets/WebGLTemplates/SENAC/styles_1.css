@@ -377,24 +377,25 @@ html {
   z-index: 10; /* Acima do canvas, mas abaixo dos controles se necessário */
 }
 
-/* ⭐ ELEMENTOS PROXY - ESTILOS BASE (Dinâmicos via JavaScript) */
+/* Elementos individuais dentro da camada (os proxies) */
 .proxy-element {
   position: absolute;
-  pointer-events: none; /* Torna o elemento clicável para o JavaScript */
+  /* Torna o elemento clicável novamente para o JavaScript */
+  pointer-events: auto; 
+  
+  /* --- ESTILOS DE DEPURAÇÃO VISUAL --- */
+  /* Um fundo semi-transparente para ver a área do botão */
+  background-color: rgba(255, 0, 255, 0.4); /* Cor magenta com 40% de opacidade */
+
+  /* Uma borda para ver os limites exatos */
+  border: 2px solid #00FF00; /* Cor verde-limão brilhante */
+
+  /* A opacidade deve ser > 0 para o fundo e a borda aparecerem */
+  opacity: 1; 
+  /* --- FIM DOS ESTILOS DE DEPURAÇÃO --- */
+  
   padding: 0;
   margin: 0;
-  cursor: pointer;
-  
-  /* ⚠️ REMOVIDOS os estilos de debug fixos! */
-  /* background-color e border agora são controlados dinamicamente via JS */
-  
-  /* Estilos que sempre permanecem */
-  box-sizing: border-box;
-  outline: none; /* Remove outline padrão do navegador */
-}
-
-/* Focus para navegação por teclado - sempre visível */
-.proxy-element:focus {
-  outline: 2px solid #0066cc !important;
-  outline-offset: 2px !important;
+  /* O cursor não é necessário, mas pode ajudar a identificar no desktop */
+  cursor: pointer; 
 }

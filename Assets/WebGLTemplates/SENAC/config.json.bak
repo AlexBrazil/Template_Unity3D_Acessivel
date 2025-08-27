@@ -22,7 +22,7 @@
   "accessibilityLayer": {
     "enable": true,
     "debug": true,
-    "pointer-events": true
+    "pointer-events": false
   }
 }
 

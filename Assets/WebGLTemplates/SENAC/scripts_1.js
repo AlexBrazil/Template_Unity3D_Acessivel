@@ -5,8 +5,6 @@ let isSoundEnabled = true;
 let currentPosition, controlsOffset, separationSpace;
 let ttsConfig = null;
 let isAccessibilityLayerActive = false;
-let accessibilityDebugMode = false;    // ⭐ Controle visual debug
-let accessibilityPointerEvents = true; // ⭐ NOVA VARIÁVEL: Controle pointer-events
 
 const controlsContainer = document.querySelector(".controls-container");
 const fullscreenBtn = document.getElementById("fullscreen-btn");
@@ -48,26 +46,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (cols.panel)
       document.documentElement.style.setProperty("--color-panel", cols.panel);
     
-    // ⭐ SEÇÃO ATUALIZADA: Configuração da Camada de Acessibilidade
+    // Configuração da Camada de Acessibilidade
     if (cfg.accessibilityLayer?.enable) {
-      // Lê as configurações de debug e pointer-events
-      accessibilityDebugMode = cfg.accessibilityLayer?.debug || false;
-      accessibilityPointerEvents = cfg.accessibilityLayer?.["pointer-events"] ?? true;
-      
-      // Aplica os estilos CSS baseados nas configurações
-      applyAccessibilityStyles(accessibilityDebugMode, accessibilityPointerEvents);
-      
       setupAccessibilityLayer();
-      
-      // Log informativo sobre a configuração
-      console.log(`🔧 Camada de Acessibilidade configurada:
-        📊 Status: ATIVADA
-        🐛 Debug Visual: ${accessibilityDebugMode ? 'ATIVADO' : 'DESATIVADO'}  
-        🎯 Pointer Events: ${accessibilityPointerEvents ? 'AUTO (JS + Unity)' : 'NONE (Unity Direto)'}
-        🔄 Arquitetura: ${accessibilityPointerEvents ? 'Dual Layer' : 'Híbrida'}
-      `);
-    } else {
-      console.log("♿ Camada de Acessibilidade: DESATIVADA");
     }
   } catch (err) {
     console.warn("Erro ao ler config.json:", err);
@@ -113,82 +94,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 10) Carrega Unity WebGL
   loadUnity();
 });
-
-// ===============================================
-// ⭐ FUNÇÃO RENOMEADA E EXPANDIDA: Controle Completo de Estilos CSS
-// ===============================================
-function applyAccessibilityStyles(debugMode, pointerEvents) {
-  // Remove qualquer estilo anterior
-  const existingStyle = document.getElementById('accessibility-debug-style');
-  if (existingStyle) {
-    existingStyle.remove();
-  }
-
-  // Cria novo elemento <style> para injetar CSS dinamicamente
-  const style = document.createElement('style');
-  style.id = 'accessibility-debug-style';
-  
-  // ⚡ CONFIGURAÇÃO BASE: pointer-events
-  const pointerEventsValue = pointerEvents ? 'auto' : 'none';
-  
-  if (debugMode) {
-    // 🐛 MODO DEBUG: Elementos visíveis
-    style.textContent = `
-      .proxy-element {
-        background-color: rgba(255, 0, 255, 0.4) !important; /* Magenta semi-transparente */
-        border: 2px solid #00FF00 !important;                 /* Borda verde brilhante */
-        opacity: 1 !important;
-        pointer-events: ${pointerEventsValue} !important;     /* ⭐ Controlado dinamicamente */
-      }
-      
-      /* Label visual para debug */
-      .proxy-element::after {
-        content: attr(aria-label);
-        position: absolute;
-        top: -20px;
-        left: 0;
-        background: #000;
-        color: #fff;
-        font-size: 10px;
-        padding: 2px 4px;
-        border-radius: 2px;
-        white-space: nowrap;
-        z-index: 1000;
-        pointer-events: none;
-      }
-    `;
-    
-    console.log(`🐛 Modo DEBUG ativado:
-      🎨 Visual: Magenta + Verde + Labels
-      🎯 Pointer Events: ${pointerEventsValue}
-      🔄 Arquitetura: ${pointerEvents ? 'Dual Layer (JS + Unity)' : 'Híbrida (HTML + Unity)'}
-    `);
-    
-  } else {
-    // 👻 MODO PRODUÇÃO: Elementos transparentes
-    style.textContent = `
-      .proxy-element {
-        background-color: transparent !important;
-        border: none !important;
-        opacity: 0 !important;
-        pointer-events: ${pointerEventsValue} !important;     /* ⭐ Controlado dinamicamente */
-      }
-      
-      .proxy-element::after {
-        display: none !important;
-      }
-    `;
-    
-    console.log(`👻 Modo PRODUÇÃO ativado:
-      🎨 Visual: Totalmente Transparente
-      🎯 Pointer Events: ${pointerEventsValue}
-      🔄 Arquitetura: ${pointerEvents ? 'Dual Layer (JS + Unity)' : 'Híbrida (HTML + Unity)'}
-    `);
-  }
-  
-  // Adiciona o estilo ao <head>
-  document.head.appendChild(style);
-}
 
 // ——— Detecta Mobile e Ajusta VLibras ———
 const detectMob = () => {
@@ -460,7 +365,7 @@ function requestFullSyncFromUnity() {
 }
 
 /**
- * ⭐ FUNÇÃO ATUALIZADA: Esta função é chamada PELA UNITY para atualizar a camada HTML.
+ * ATENÇÃO: Esta função é chamada PELA UNITY para atualizar a camada HTML.
  * jsonString - Uma string JSON contendo a lista de elementos acessíveis.
  */
 function UpdateAccessibilityLayer(jsonString) {
@@ -481,23 +386,23 @@ function UpdateAccessibilityLayer(jsonString) {
     }
     const canvasRect = canvas.getBoundingClientRect();
 
-    // Pega o pixel ratio do dispositivo. Este é o fator de conversão
+    // [NOVO] Pega o pixel ratio do dispositivo. Este é o fator de conversão
     // entre os pixels físicos da Unity e os pixels de CSS do navegador.
     const dpr = window.devicePixelRatio || 1;
 
     elements.forEach(elementData => {
       const proxyEl = document.createElement('button');
-      proxyEl.className = 'proxy-element'; // ⭐ Classe CSS controlada dinamicamente
+      proxyEl.className = 'proxy-element';
       proxyEl.setAttribute('aria-label', elementData.label);
       
-      // Converte as coordenadas e dimensões de pixels físicos (da Unity)
+      // [NOVO] Converte as coordenadas e dimensões de pixels físicos (da Unity)
       // para pixels de CSS, dividindo pelo devicePixelRatio.
       const cssX = elementData.x / dpr;
       const cssY = elementData.y / dpr;
       const cssWidth = elementData.width / dpr;
       const cssHeight = elementData.height / dpr;
 
-      // Aplica as coordenadas convertidas.
+      // [NOVO] Aplica as coordenadas convertidas.
       // O offset do canvas (canvasRect.left/top) já está em pixels de CSS,
       // então podemos somar diretamente os valores convertidos.
       proxyEl.style.left = `${canvasRect.left + cssX}px`;
@@ -507,32 +412,19 @@ function UpdateAccessibilityLayer(jsonString) {
       proxyEl.style.width = `${cssWidth}px`;
       proxyEl.style.height = `${cssHeight}px`;
 
-      // ⭐ CONDICIONALMENTE adiciona event listener baseado em pointer-events
-      if (accessibilityPointerEvents) {
-        // Sistema Dual Layer: JS captura clique e envia para Unity
-        proxyEl.addEventListener('click', () => {
-          if (unityInstance) {
-            unityInstance.SendMessage(
-              'AccessibilityManager',
-              'OnProxyElementClicked',
-              elementData.id
-            );
-          }
-        });
-      }
-      // Se pointer-events = false, cliques "passam através" direto para Unity
+      // Adiciona o listener de clique que envia a informação de volta para a Unity
+      proxyEl.addEventListener('click', () => {
+        if (unityInstance) {
+          unityInstance.SendMessage(
+            'AccessibilityManager',
+            'OnProxyElementClicked',
+            elementData.id
+          );
+        }
+      });
 
       accessibilityOverlay.appendChild(proxyEl);
     });
-
-    // ⭐ Log informativo baseado na configuração
-    if (accessibilityDebugMode) {
-      const architecture = accessibilityPointerEvents ? 'Dual Layer (JS + Unity)' : 'Híbrida (HTML + Unity)';
-      console.log(`🐛 [DEBUG] ${elements.length} elementos proxy criados - ${architecture}`);
-    } else {
-      const architecture = accessibilityPointerEvents ? 'Dual Layer' : 'Híbrida';
-      console.log(`👻 [PRODUÇÃO] ${elements.length} elementos proxy criados - ${architecture}`);
-    }
 
   } catch (e) {
     console.error("Erro ao processar dados da camada de acessibilidade:", e);
@@ -607,101 +499,3 @@ function loadUnity() {
   };
   document.body.appendChild(loaderScript);
 }
-
-// ===============================================
-// 🛠️ FUNÇÕES AUXILIARES DE DEBUG - ATUALIZADAS
-// ===============================================
-
-/**
- * ⭐ FUNÇÃO ATUALIZADA: Alterna debug visual em runtime
- */
-function toggleAccessibilityDebug() {
-  accessibilityDebugMode = !accessibilityDebugMode;
-  applyAccessibilityStyles(accessibilityDebugMode, accessibilityPointerEvents);
-  
-  // Força uma nova sincronização para aplicar os estilos imediatamente
-  if (isAccessibilityLayerActive && unityInstance) {
-    unityInstance.SendMessage('AccessibilityManager', 'RequestFullSyncFromJS');
-  }
-  
-  return `🔧 Debug Visual: ${accessibilityDebugMode ? 'ATIVADO' : 'DESATIVADO'}`;
-}
-
-/**
- * ⭐ NOVA FUNÇÃO: Alterna pointer-events em runtime
- */
-function toggleAccessibilityPointerEvents() {
-  accessibilityPointerEvents = !accessibilityPointerEvents;
-  applyAccessibilityStyles(accessibilityDebugMode, accessibilityPointerEvents);
-  
-  // Força uma nova sincronização para aplicar os estilos imediatamente
-  if (isAccessibilityLayerActive && unityInstance) {
-    unityInstance.SendMessage('AccessibilityManager', 'RequestFullSyncFromJS');
-  }
-  
-  const mode = accessibilityPointerEvents ? 'DUAL LAYER (JS + Unity)' : 'HÍBRIDA (HTML + Unity)';
-  return `🎯 Pointer Events: ${accessibilityPointerEvents ? 'AUTO' : 'NONE'} - Arquitetura: ${mode}`;
-}
-
-/**
- * ⭐ FUNÇÃO ATUALIZADA: Mostra informações completas
- */
-function showAccessibilityInfo() {
-  const overlay = document.getElementById('accessibility-overlay');
-  const proxyElements = overlay.querySelectorAll('.proxy-element');
-  
-  console.log(`
-🔍 INFORMAÇÕES DA CAMADA DE ACESSIBILIDADE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Status: ${isAccessibilityLayerActive ? 'ATIVA' : 'INATIVA'}
-🐛 Debug Visual: ${accessibilityDebugMode ? 'ATIVADO' : 'DESATIVADO'}
-🎯 Pointer Events: ${accessibilityPointerEvents ? 'AUTO' : 'NONE'}
-🔄 Arquitetura: ${accessibilityPointerEvents ? 'Dual Layer (JS + Unity)' : 'Híbrida (HTML + Unity)'}
-📱 Device Pixel Ratio: ${window.devicePixelRatio || 1}
-🎪 Elementos Proxy: ${proxyElements.length}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔧 Comandos Disponíveis:
-  toggleAccessibilityDebug()         - Liga/desliga visual debug
-  toggleAccessibilityPointerEvents() - Alterna pointer-events (auto/none)
-  listAccessibilityElements()        - Lista todos elementos
-  `);
-  
-  return {
-    active: isAccessibilityLayerActive,
-    debugMode: accessibilityDebugMode,
-    pointerEvents: accessibilityPointerEvents,
-    architecture: accessibilityPointerEvents ? 'dual-layer' : 'hybrid-layer',
-    proxyCount: proxyElements.length,
-    devicePixelRatio: window.devicePixelRatio || 1
-  };
-}
-
-/**
- * ⭐ FUNÇÃO MANTIDA: Lista todos os elementos acessíveis
- */
-function listAccessibilityElements() {
-  const overlay = document.getElementById('accessibility-overlay');
-  const proxyElements = overlay.querySelectorAll('.proxy-element');
-  
-  console.log('📋 ELEMENTOS DA CAMADA DE ACESSIBILIDADE:');
-  proxyElements.forEach((element, index) => {
-    const rect = element.getBoundingClientRect();
-    console.log(`${index + 1}. "${element.getAttribute('aria-label')}" - ${rect.width.toFixed(0)}x${rect.height.toFixed(0)} px`);
-  });
-  
-  return Array.from(proxyElements).map(el => ({
-    label: el.getAttribute('aria-label'),
-    position: el.getBoundingClientRect()
-  }));
-}
-
-// ===============================================
-// 🌐 EXPOSIÇÃO GLOBAL ATUALIZADA
-// ===============================================
-
-// Torna as funções acessíveis via console do navegador
-window.toggleAccessibilityDebug = toggleAccessibilityDebug;
-window.toggleAccessibilityPointerEvents = toggleAccessibilityPointerEvents; // ⭐ NOVA FUNÇÃO
-window.showAccessibilityInfo = showAccessibilityInfo;
-window.listAccessibilityElements = listAccessibilityElements;
