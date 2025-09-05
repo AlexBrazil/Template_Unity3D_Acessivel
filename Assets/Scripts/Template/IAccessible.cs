@@ -7,6 +7,7 @@ public interface IAccessible
 {
     string AccessibilityId { get; }
     string AccessibilityLabel { get; }
+    int NavigationOrder { get; }
     RectTransform RectTransform { get; }
     bool IsInteractable();
 }

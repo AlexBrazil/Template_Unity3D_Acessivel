@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
 public class AccessibilityManager : MonoBehaviour
 {
@@ -82,8 +83,8 @@ public class AccessibilityManager : MonoBehaviour
     public void SyncAccessibilityLayer()
     {
         AccessibleUIList uiList = new AccessibleUIList();
-        IAccessible[] accessibleElements = FindObjectsByType<AccessibleButton>(FindObjectsSortMode.None);
-
+        //IAccessible[] accessibleElements = FindObjectsByType<AccessibleButton>(FindObjectsSortMode.None);
+        IAccessible[] accessibleElements = FindObjectsByType<AccessibleButton>(FindObjectsSortMode.None).OrderBy(element => element.NavigationOrder).ToArray();
         foreach (var element in accessibleElements)
         {
             if (element.RectTransform.gameObject.activeInHierarchy && element.IsInteractable())

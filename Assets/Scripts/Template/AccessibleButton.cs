@@ -13,12 +13,16 @@ public class AccessibleButton : MonoBehaviour, IAccessible
     [Tooltip("Texto que será lido pelo leitor de tela. Ex: 'Iniciar Jogo'.")]
     [SerializeField] private string accessibilityLabel;
 
+    [Tooltip("Ordem de navegação para leitores de tela (0, 1, 2...).")]
+    [SerializeField] private int navigationOrder = 0;
+
     private Button _button;
     private RectTransform _rectTransform;
 
     // Implementação da Interface contratada na interface IAccessible
     public string AccessibilityId => accessibilityId;
     public string AccessibilityLabel => accessibilityLabel;
+    public int NavigationOrder => navigationOrder;
     public RectTransform RectTransform => _rectTransform;
     public bool IsInteractable() => _button != null && _button.interactable;
 
